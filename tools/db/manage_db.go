@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
-	"github.com/gojp/goreportcard/handlers"
+	"github.com/gojp/goreportcard/report"
 )
 
 var (
@@ -31,7 +31,7 @@ func deleteRepo(repo string) error {
 		}
 		scoreBytes := mb.Get([]byte("scores"))
 
-		scores := &handlers.ScoreHeap{}
+		scores := &report.HighScoreHeap{}
 		json.Unmarshal(scoreBytes, scores)
 
 		heap.Init(scores)

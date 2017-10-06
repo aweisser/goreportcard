@@ -148,9 +148,9 @@ func updateHighScores(mb *bolt.Bucket, resp report.Card, repo string) error {
 	// start updating high score list
 	scoreBytes := mb.Get([]byte("scores"))
 	if scoreBytes == nil {
-		scoreBytes, _ = json.Marshal([]ScoreHeap{})
+		scoreBytes, _ = json.Marshal([]report.HighScoreHeap{})
 	}
-	scores := &ScoreHeap{}
+	scores := &report.HighScoreHeap{}
 	json.Unmarshal(scoreBytes, scores)
 
 	heap.Init(scores)
@@ -167,7 +167,7 @@ func updateHighScores(mb *bolt.Bucket, resp report.Card, repo string) error {
 		}
 	}
 	// now we can safely push it onto the heap
-	heap.Push(scores, scoreItem{
+	heap.Push(scores, report.HighScoreItem{
 		Repo:  repo,
 		Score: resp.Average * 100.0,
 		Files: resp.Files,

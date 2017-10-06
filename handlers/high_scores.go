@@ -11,6 +11,7 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/dustin/go-humanize"
+	"github.com/gojp/goreportcard/report"
 )
 
 func add(x, y int) int {
@@ -31,7 +32,7 @@ func HighScoresHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	count, scores := 0, &ScoreHeap{}
+	count, scores := 0, &report.HighScoreHeap{}
 	err = db.View(func(tx *bolt.Tx) error {
 		hsb := tx.Bucket([]byte(MetaBucket))
 		if hsb == nil {
@@ -39,7 +40,7 @@ func HighScoresHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		scoreBytes := hsb.Get([]byte("scores"))
 		if scoreBytes == nil {
-			scoreBytes, err = json.Marshal([]ScoreHeap{})
+			scoreBytes, err = json.Marshal([]report.HighScoreHeap{})
 			if err != nil {
 				return err
 			}
@@ -65,9 +66,9 @@ func HighScoresHandler(w http.ResponseWriter, r *http.Request) {
 	funcs := template.FuncMap{"add": add, "formatScore": formatScore}
 	t := template.Must(template.New("high_scores.html").Delims("[[", "]]").Funcs(funcs).ParseFiles("templates/high_scores.html", "templates/footer.html"))
 
-	sortedScores := make([]scoreItem, len(*scores))
+	sortedScores := make([]report.HighScoreItem, len(*scores))
 	for i := range sortedScores {
-		sortedScores[len(sortedScores)-i-1] = heap.Pop(scores).(scoreItem)
+		sortedScores[len(sortedScores)-i-1] = heap.Pop(scores).(report.HighScoreItem)
 	}
 
 	t.Execute(w, map[string]interface{}{
