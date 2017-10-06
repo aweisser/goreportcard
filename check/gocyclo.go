@@ -1,5 +1,7 @@
 package check
 
+import "github.com/gojp/goreportcard/report"
+
 // GoCyclo is the check for the go cyclo command
 type GoCyclo struct {
 	Dir       string
@@ -17,7 +19,7 @@ func (g GoCyclo) Weight() float64 {
 }
 
 // Percentage returns the percentage of .go files that pass gofmt
-func (g GoCyclo) Percentage() (float64, []FileSummary, error) {
+func (g GoCyclo) Percentage() (float64, []report.FileSummary, error) {
 	return GoTool(g.Dir, g.Filenames, []string{"gometalinter", "--deadline=180s", "--disable-all", "--enable=gocyclo", "--cyclo-over=15"})
 }
 

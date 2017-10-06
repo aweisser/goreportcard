@@ -95,7 +95,7 @@ func newChecksResp(repo string, forceRefresh bool) (report.Card, error) {
 
 	ch := make(chan report.Score)
 	for _, c := range checks {
-		go func(c check.Check) {
+		go func(c report.Check) {
 			p, summaries, err := c.Percentage()
 			errMsg := ""
 			if err != nil {

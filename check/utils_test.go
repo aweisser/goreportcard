@@ -3,6 +3,8 @@ package check
 import (
 	"reflect"
 	"testing"
+
+	"github.com/gojp/goreportcard/report"
 )
 
 func TestGoFiles(t *testing.T) {
@@ -27,10 +29,10 @@ var goToolTests = []struct {
 	filenames []string
 	tool      []string
 	percent   float64
-	failed    []FileSummary
+	failed    []report.FileSummary
 	wantErr   bool
 }{
-	{"go vet", "testfiles/", []string{"testfiles/a.go", "testfiles/b.go", "testfiles/c.go"}, []string{"go", "tool", "vet"}, 1, []FileSummary{}, false},
+	{"go vet", "testfiles/", []string{"testfiles/a.go", "testfiles/b.go", "testfiles/c.go"}, []string{"go", "tool", "vet"}, 1, []report.FileSummary{}, false},
 }
 
 func TestGoTool(t *testing.T) {

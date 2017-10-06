@@ -1,10 +1,6 @@
 package report
 
-import (
-	"time"
-
-	"github.com/gojp/goreportcard/check"
-)
+import "time"
 
 // A Card sums up the whole report for a single repo.
 // It contains a set of Scores, a final Grade and some other meta data.
@@ -23,12 +19,12 @@ type Card struct {
 
 // A Score represents a single executed check.
 type Score struct {
-	Name          string              `json:"name"`
-	Description   string              `json:"description"`
-	FileSummaries []check.FileSummary `json:"file_summaries"`
-	Weight        float64             `json:"weight"`
-	Percentage    float64             `json:"percentage"`
-	Error         string              `json:"error"`
+	Name          string        `json:"name"`
+	Description   string        `json:"description"`
+	FileSummaries []FileSummary `json:"file_summaries"`
+	Weight        float64       `json:"weight"`
+	Percentage    float64       `json:"percentage"`
+	Error         string        `json:"error"`
 }
 
 // ByWeight implements sorting for checks by weight descending

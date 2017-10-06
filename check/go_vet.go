@@ -1,5 +1,7 @@
 package check
 
+import "github.com/gojp/goreportcard/report"
+
 // GoVet is the check for the go vet command
 type GoVet struct {
 	Dir       string
@@ -17,7 +19,7 @@ func (g GoVet) Weight() float64 {
 }
 
 // Percentage returns the percentage of .go files that pass go vet
-func (g GoVet) Percentage() (float64, []FileSummary, error) {
+func (g GoVet) Percentage() (float64, []report.FileSummary, error) {
 	return GoTool(g.Dir, g.Filenames, []string{"gometalinter", "--deadline=180s", "--disable-all", "--enable=vet"})
 }
 

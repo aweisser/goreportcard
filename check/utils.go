@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	"github.com/gojp/goreportcard/report"
 )
 
 var (
@@ -225,8 +227,8 @@ func makeFilename(fn string) string {
 	return fn
 }
 
-func getFileSummaryMap(out *bufio.Scanner, dir string) (map[string]FileSummary, error) {
-	fsMap := make(map[string]FileSummary)
+func getFileSummaryMap(out *bufio.Scanner, dir string) (map[string]report.FileSummary, error) {
+	fsMap := make(map[string]report.FileSummary)
 outer:
 	for out.Scan() {
 		filename := strings.Split(out.Text(), ":")[0]
@@ -258,13 +260,13 @@ outer:
 
 // GoTool runs a given go command (for example gofmt, go tool vet)
 // on a directory
-func GoTool(dir string, filenames, command []string) (float64, []FileSummary, error) {
+func GoTool(dir string, filenames, command []string) (float64, []report.FileSummary, error) {
 	// started := time.Now()
 	// temporary disabling of misspell as it's the slowest
 	// command right now
 	if strings.Contains(command[len(command)-1], "misspell") && len(filenames) > 1000 {
 		log.Println("disabling misspell on large repo...")
-		return 1, []FileSummary{}, nil
+		return 1, []report.FileSummary{}, nil
 	}
 	params := command[1:]
 	params = addSkipDirs(params)
@@ -273,12 +275,12 @@ func GoTool(dir string, filenames, command []string) (float64, []FileSummary, er
 	cmd := exec.Command(command[0], params...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return 0, []FileSummary{}, err
+		return 0, []report.FileSummary{}, err
 	}
 
 	err = cmd.Start()
 	if err != nil {
-		return 0, []FileSummary{}, err
+		return 0, []report.FileSummary{}, err
 	}
 
 	out := bufio.NewScanner(stdout)
@@ -286,14 +288,14 @@ func GoTool(dir string, filenames, command []string) (float64, []FileSummary, er
 	// the same file can appear multiple times out of order
 	// in the output, so we can't go line by line, have to store
 	// a map of filename to FileSummary
-	var failed = []FileSummary{}
+	var failed = []report.FileSummary{}
 
 	fsMap, err := getFileSummaryMap(out, dir)
 	if err != nil {
-		return 0, []FileSummary{}, err
+		return 0, []report.FileSummary{}, err
 	}
 	if err := out.Err(); err != nil {
-		return 0, []FileSummary{}, err
+		return 0, []report.FileSummary{}, err
 	}
 
 	for _, v := range fsMap {
@@ -332,8 +334,8 @@ func GoTool(dir string, filenames, command []string) (float64, []FileSummary, er
 }
 
 // GoFmtNative runs gofmt via golang's stdlib format pkg
-func GoFmtNative(dir string, filenames []string) (float64, []FileSummary, error) {
-	fsChan := make(chan FileSummary)
+func GoFmtNative(dir string, filenames []string) (float64, []report.FileSummary, error) {
+	fsChan := make(chan report.FileSummary)
 	errChan := make(chan error)
 	stopChan := make(chan bool)
 	go func(stopChan chan bool) {
@@ -348,7 +350,7 @@ func GoFmtNative(dir string, filenames []string) (float64, []FileSummary, error)
 				continue
 			}
 
-			go func(c chan FileSummary, errChan chan error, f string) {
+			go func(c chan report.FileSummary, errChan chan error, f string) {
 				b, err := ioutil.ReadFile(f)
 				if err != nil {
 					errChan <- err
@@ -359,11 +361,11 @@ func GoFmtNative(dir string, filenames []string) (float64, []FileSummary, error)
 				}
 				if !bytes.Equal(b, g) {
 					filename := strings.TrimPrefix(f, "_repos/src")
-					fs := FileSummary{}
+					fs := report.FileSummary{}
 					fs.Filename = makeFilename(filename)
 					fu := fileURL(dir, strings.TrimPrefix(f, "_repos/src"))
 					fs.FileURL = fu
-					fs.Errors = append(fs.Errors, Error{1, "file is not gofmted"})
+					fs.Errors = append(fs.Errors, report.Error{1, "file is not gofmted"})
 
 					fsChan <- fs
 				}
@@ -373,8 +375,8 @@ func GoFmtNative(dir string, filenames []string) (float64, []FileSummary, error)
 	}(stopChan)
 
 	var (
-		failed = []FileSummary{}
-		f      FileSummary
+		failed = []report.FileSummary{}
+		f      report.FileSummary
 		err    error
 	)
 	for {
@@ -382,7 +384,7 @@ func GoFmtNative(dir string, filenames []string) (float64, []FileSummary, error)
 		case fsChan <- f:
 			failed = append(failed, f)
 		case errChan <- err:
-			return 0, []FileSummary{}, err
+			return 0, []report.FileSummary{}, err
 		case <-stopChan:
 			return float64(len(filenames)-len(failed)) / float64(len(filenames)), failed, nil
 		}

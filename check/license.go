@@ -4,6 +4,8 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+
+	"github.com/gojp/goreportcard/report"
 )
 
 // License is the check for the existence of a license file
@@ -33,10 +35,10 @@ var licenses = []string{
 }
 
 // Percentage returns 0 if no LICENSE, 1 if LICENSE
-func (g License) Percentage() (float64, []FileSummary, error) {
+func (g License) Percentage() (float64, []report.FileSummary, error) {
 	files, err := ioutil.ReadDir(g.Dir)
 	if err != nil {
-		return 0.0, []FileSummary{}, err
+		return 0.0, []report.FileSummary{}, err
 	}
 
 	for _, file := range files {
@@ -48,12 +50,12 @@ func (g License) Percentage() (float64, []FileSummary, error) {
 
 		for i := range licenses {
 			if strings.HasPrefix(name, licenses[i]) {
-				return 1.0, []FileSummary{}, nil
+				return 1.0, []report.FileSummary{}, nil
 			}
 		}
 	}
 
-	return 0.0, []FileSummary{{"", "http://choosealicense.com/", []Error{}}}, nil
+	return 0.0, []report.FileSummary{{"", "http://choosealicense.com/", []report.Error{}}}, nil
 }
 
 // Description returns the description of License

@@ -1,5 +1,7 @@
 package check
 
+import "github.com/gojp/goreportcard/report"
+
 // GoLint is the check for the go lint command
 type GoLint struct {
 	Dir       string
@@ -17,7 +19,7 @@ func (g GoLint) Weight() float64 {
 }
 
 // Percentage returns the percentage of .go files that pass golint
-func (g GoLint) Percentage() (float64, []FileSummary, error) {
+func (g GoLint) Percentage() (float64, []report.FileSummary, error) {
 	return GoTool(g.Dir, g.Filenames, []string{"gometalinter", "--deadline=180s", "--disable-all", "--enable=golint", "--min-confidence=0.85", "--vendor"})
 }
 

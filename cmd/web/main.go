@@ -11,6 +11,7 @@ import (
 
 	"github.com/gojp/goreportcard/check"
 	"github.com/gojp/goreportcard/handlers"
+	"github.com/gojp/goreportcard/report"
 
 	"github.com/boltdb/bolt"
 )
@@ -20,8 +21,8 @@ var (
 	dev  = flag.Bool("dev", false, "dev mode")
 )
 
-func createChecks(dir string, filenames []string) []check.Check {
-	return []check.Check{
+func createChecks(dir string, filenames []string) []report.Check {
+	return []report.Check{
 		check.GoFmt{Dir: dir, Filenames: filenames},
 		check.GoVet{Dir: dir, Filenames: filenames},
 		check.GoLint{Dir: dir, Filenames: filenames},

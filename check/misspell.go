@@ -1,5 +1,7 @@
 package check
 
+import "github.com/gojp/goreportcard/report"
+
 // Misspell is the check for the misspell command
 type Misspell struct {
 	Dir       string
@@ -17,7 +19,7 @@ func (g Misspell) Weight() float64 {
 }
 
 // Percentage returns the percentage of .go files that pass gofmt
-func (g Misspell) Percentage() (float64, []FileSummary, error) {
+func (g Misspell) Percentage() (float64, []report.FileSummary, error) {
 	return GoTool(g.Dir, g.Filenames, []string{"gometalinter", "--deadline=180s", "--disable-all", "--enable=misspell"})
 }
 

@@ -1,5 +1,7 @@
 package check
 
+import "github.com/gojp/goreportcard/report"
+
 // ErrCheck is the check for the errcheck command
 type ErrCheck struct {
 	Dir       string
@@ -17,7 +19,7 @@ func (c ErrCheck) Weight() float64 {
 }
 
 // Percentage returns the percentage of .go files that pass gofmt
-func (c ErrCheck) Percentage() (float64, []FileSummary, error) {
+func (c ErrCheck) Percentage() (float64, []report.FileSummary, error) {
 	return GoTool(c.Dir, c.Filenames, []string{"gometalinter", "--deadline=180s", "--disable-all", "--linter='errch:errcheck {path}:PATH:LINE:MESSAGE'", "--enable=errch"})
 }
 
