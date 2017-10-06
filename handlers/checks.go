@@ -12,6 +12,7 @@ import (
 	humanize "github.com/dustin/go-humanize"
 	"github.com/gojp/goreportcard/check"
 	"github.com/gojp/goreportcard/download"
+	"github.com/gojp/goreportcard/report"
 )
 
 func dirName(repo string) string {
@@ -65,16 +66,16 @@ type score struct {
 }
 
 type checksResp struct {
-	Checks               []score   `json:"checks"`
-	Average              float64   `json:"average"`
-	Grade                Grade     `json:"grade"`
-	Files                int       `json:"files"`
-	Issues               int       `json:"issues"`
-	Repo                 string    `json:"repo"`
-	ResolvedRepo         string    `json:"resolvedRepo"`
-	LastRefresh          time.Time `json:"last_refresh"`
-	LastRefreshFormatted string    `json:"formatted_last_refresh"`
-	LastRefreshHumanized string    `json:"humanized_last_refresh"`
+	Checks               []score      `json:"checks"`
+	Average              float64      `json:"average"`
+	Grade                report.Grade `json:"grade"`
+	Files                int          `json:"files"`
+	Issues               int          `json:"issues"`
+	Repo                 string       `json:"repo"`
+	ResolvedRepo         string       `json:"resolvedRepo"`
+	LastRefresh          time.Time    `json:"last_refresh"`
+	LastRefreshFormatted string       `json:"formatted_last_refresh"`
+	LastRefreshHumanized string       `json:"humanized_last_refresh"`
 }
 
 func newChecksResp(repo string, forceRefresh bool) (checksResp, error) {
@@ -84,7 +85,7 @@ func newChecksResp(repo string, forceRefresh bool) (checksResp, error) {
 			// just log the error and continue
 			log.Println(err)
 		} else {
-			resp.Grade = grade(resp.Average * 100) // grade is not stored for some repos, yet
+			resp.Grade = report.GradeOf(resp.Average * 100) // grade is not stored for some repos, yet
 			return resp, nil
 		}
 	}
@@ -161,7 +162,7 @@ func newChecksResp(repo string, forceRefresh bool) (checksResp, error) {
 	sort.Sort(ByWeight(resp.Checks))
 	resp.Average = total
 	resp.Issues = len(issues)
-	resp.Grade = grade(total * 100)
+	resp.Grade = report.GradeOf(total * 100)
 
 	return resp, nil
 }
