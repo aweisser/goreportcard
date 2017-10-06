@@ -19,15 +19,15 @@ func dirName(repo string) string {
 	return fmt.Sprintf("_repos/src/%s", repo)
 }
 
-func getFromCache(repo string) (checksResp, error) {
+func getFromCache(repo string) (report.Card, error) {
 	// try and fetch from boltdb
 	db, err := bolt.Open(DBPath, 0600, &bolt.Options{Timeout: 3 * time.Second})
 	if err != nil {
-		return checksResp{}, fmt.Errorf("failed to open bolt database during GET: %v", err)
+		return report.Card{}, fmt.Errorf("failed to open bolt database during GET: %v", err)
 	}
 	defer db.Close()
 
-	resp := checksResp{}
+	resp := report.Card{}
 	err = db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(RepoBucket))
 		if b == nil {
@@ -56,29 +56,7 @@ func getFromCache(repo string) (checksResp, error) {
 	return resp, nil
 }
 
-type score struct {
-	Name          string              `json:"name"`
-	Description   string              `json:"description"`
-	FileSummaries []check.FileSummary `json:"file_summaries"`
-	Weight        float64             `json:"weight"`
-	Percentage    float64             `json:"percentage"`
-	Error         string              `json:"error"`
-}
-
-type checksResp struct {
-	Checks               []score      `json:"checks"`
-	Average              float64      `json:"average"`
-	Grade                report.Grade `json:"grade"`
-	Files                int          `json:"files"`
-	Issues               int          `json:"issues"`
-	Repo                 string       `json:"repo"`
-	ResolvedRepo         string       `json:"resolvedRepo"`
-	LastRefresh          time.Time    `json:"last_refresh"`
-	LastRefreshFormatted string       `json:"formatted_last_refresh"`
-	LastRefreshHumanized string       `json:"humanized_last_refresh"`
-}
-
-func newChecksResp(repo string, forceRefresh bool) (checksResp, error) {
+func newChecksResp(repo string, forceRefresh bool) (report.Card, error) {
 	if !forceRefresh {
 		resp, err := getFromCache(repo)
 		if err != nil {
@@ -93,7 +71,7 @@ func newChecksResp(repo string, forceRefresh bool) (checksResp, error) {
 	// fetch the repo and grade it
 	repoRoot, err := download.Download(repo, "_repos/src")
 	if err != nil {
-		return checksResp{}, fmt.Errorf("could not clone repo: %v", err)
+		return report.Card{}, fmt.Errorf("could not clone repo: %v", err)
 	}
 
 	repo = repoRoot.Root
@@ -101,10 +79,10 @@ func newChecksResp(repo string, forceRefresh bool) (checksResp, error) {
 	dir := dirName(repo)
 	filenames, skipped, err := check.GoFiles(dir)
 	if err != nil {
-		return checksResp{}, fmt.Errorf("could not get filenames: %v", err)
+		return report.Card{}, fmt.Errorf("could not get filenames: %v", err)
 	}
 	if len(filenames) == 0 {
-		return checksResp{}, fmt.Errorf("no .go files found")
+		return report.Card{}, fmt.Errorf("no .go files found")
 	}
 
 	err = check.RenameFiles(skipped)
@@ -115,7 +93,7 @@ func newChecksResp(repo string, forceRefresh bool) (checksResp, error) {
 
 	checks := createChecks(dir, filenames)
 
-	ch := make(chan score)
+	ch := make(chan report.Score)
 	for _, c := range checks {
 		go func(c check.Check) {
 			p, summaries, err := c.Percentage()
@@ -124,7 +102,7 @@ func newChecksResp(repo string, forceRefresh bool) (checksResp, error) {
 				log.Printf("ERROR: (%s) %v", c.Name(), err)
 				errMsg = err.Error()
 			}
-			s := score{
+			s := report.Score{
 				Name:          c.Name(),
 				Description:   c.Description(),
 				FileSummaries: summaries,
@@ -137,7 +115,7 @@ func newChecksResp(repo string, forceRefresh bool) (checksResp, error) {
 	}
 
 	t := time.Now().UTC()
-	resp := checksResp{
+	resp := report.Card{
 		Repo:                 repo,
 		ResolvedRepo:         repoRoot.Repo,
 		Files:                len(filenames),
@@ -159,17 +137,10 @@ func newChecksResp(repo string, forceRefresh bool) (checksResp, error) {
 	}
 	total /= totalWeight
 
-	sort.Sort(ByWeight(resp.Checks))
+	sort.Sort(report.ByWeight(resp.Checks))
 	resp.Average = total
 	resp.Issues = len(issues)
 	resp.Grade = report.GradeOf(total * 100)
 
 	return resp, nil
 }
-
-// ByWeight implements sorting for checks by weight descending
-type ByWeight []score
-
-func (a ByWeight) Len() int           { return len(a) }
-func (a ByWeight) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByWeight) Less(i, j int) bool { return a[i].Weight > a[j].Weight }

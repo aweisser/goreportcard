@@ -12,6 +12,7 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/gojp/goreportcard/check"
 	"github.com/gojp/goreportcard/download"
+	"github.com/gojp/goreportcard/report"
 )
 
 const (
@@ -138,7 +139,7 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func updateHighScores(mb *bolt.Bucket, resp checksResp, repo string) error {
+func updateHighScores(mb *bolt.Bucket, resp report.Card, repo string) error {
 	// check if we need to update the high score list
 	if resp.Files < 100 {
 		// only repos with >= 100 files are considered for the high score list
@@ -247,8 +248,8 @@ func updateRecentlyViewed(mb *bolt.Bucket, repo string) error {
 	return nil
 }
 
-//func updateMetadata(tx *bolt.Tx, resp checksResp, repo string, isNewRepo bool, oldScore *float64) error {
-func updateMetadata(tx *bolt.Tx, resp checksResp, repo string, isNewRepo bool) error {
+//func updateMetadata(tx *bolt.Tx, resp report.Card, repo string, isNewRepo bool, oldScore *float64) error {
+func updateMetadata(tx *bolt.Tx, resp report.Card, repo string, isNewRepo bool) error {
 	// fetch meta-bucket
 	mb := tx.Bucket([]byte(MetaBucket))
 	if mb == nil {
