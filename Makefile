@@ -14,10 +14,10 @@ test:
 	 go test -cover ./check ./handlers
 
 start:
-	 go run main.go
+	 go run cmd/web/main.go
 
 start-dev:
-	go run main.go -http 127.0.0.1:8000 -dev
+	go run cmd/web/main.go -http 127.0.0.1:8000 -dev
 
 misspell:
 	find . -name '*.go' -not -path './vendor/*' | xargs misspell -error
